@@ -1,178 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teacher Student Coins & Marks</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<style>
-body { font-family:sans-serif; background:#0f172a; color:white; margin:0; padding:0; }
-.container { max-width:900px; margin:auto; padding:20px; }
-h1 { text-align:center; }
-input, button { padding:8px; margin:5px 0; border-radius:5px; border:none; }
-button { cursor:pointer; background:#06b6d4; color:black; font-weight:bold; }
-table { width:100%; border-collapse:collapse; margin-top:20px; }
-th, td { padding:10px; border-bottom:1px solid rgba(255,255,255,0.2); text-align:center; }
-.coin.pos { color:#16a34a; }
-.coin.neg { color:#dc2626; }
-.hidden { display:none; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nimo TV Stream Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #121212; /* Dark background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .video-container {
+            width: 90%;
+            max-width: 1280px;
+            aspect-ratio: 16 / 9;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-<h1>Student Coins & Marks System</h1>
 
-<!-- Login -->
-<div id="loginDiv">
-    <h3>Teacher Login</h3>
-    <input type="email" id="email" placeholder="Teacher Email">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-    <button onclick="signup()">Sign Up (Teacher)</button>
-</div>
+    <div class="video-container">
+        <iframe 
+            src="https://www.nimo.tv/embed/4109610361" 
+            allowfullscreen>
+        </iframe>
+    </div>
 
-<!-- Admin Panel -->
-<div id="adminPanel" class="hidden">
-    <h3>Welcome, <span id="teacherName"></span></h3>
-    <button onclick="logout()">Logout</button>
-    <hr>
-    <h4>Add Student</h4>
-    <input type="text" id="studentName" placeholder="Student Name">
-    <input type="number" id="studentCoins" placeholder="Initial Coins">
-    <button onclick="addStudent()">Add Student</button>
-    <hr>
-</div>
-
-<!-- Leaderboard -->
-<div id="leaderboard">
-    <h3>Students Leaderboard</h3>
-    <table>
-        <thead>
-            <tr><th>Rank</th><th>Name</th><th>Coins</th><th>Marks</th><th>Actions</th></tr>
-        </thead>
-        <tbody id="studentTable"></tbody>
-    </table>
-</div>
-
-<script>
-// ---------------- Firebase Config ----------------
-const firebaseConfig = {
-  apiKey: "AIzaSyDBEFpXhcenA7pUlDAmk1VxtQ2fFGeRhPk",
-  authDomain: "counng.firebaseapp.com",
-  projectId: "counng",
-  storageBucket: "counng.firebasestorage.app",
-  messagingSenderId: "49517241627",
-  appId: "1:49517241627:web:564b543df93732a8e6dfbe",
-  measurementId: "G-GL5FX01HCZ"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-// ---------------- DOM Elements ----------------
-const loginDiv = document.getElementById("loginDiv");
-const adminPanel = document.getElementById("adminPanel");
-const teacherNameSpan = document.getElementById("teacherName");
-const studentTable = document.getElementById("studentTable");
-
-// ---------------- Auth State ----------------
-auth.onAuthStateChanged(user => {
-    if(user){
-        loginDiv.classList.add("hidden");
-        adminPanel.classList.remove("hidden");
-        teacherNameSpan.textContent = user.email;
-        loadStudents();
-    } else {
-        loginDiv.classList.remove("hidden");
-        adminPanel.classList.add("hidden");
-    }
-});
-
-// ---------------- Login / Signup ----------------
-function login(){
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    auth.signInWithEmailAndPassword(email,password)
-    .catch(e=>alert("Login Error: "+e.message));
-}
-
-function signup(){
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    auth.createUserWithEmailAndPassword(email,password)
-    .then(()=>alert("Teacher account created!"))
-    .catch(e=>alert("Sign Up Error: "+e.message));
-}
-
-function logout(){
-    auth.signOut();
-}
-
-// ---------------- Student Functions ----------------
-async function addStudent(){
-    const name = document.getElementById("studentName").value.trim();
-    const coins = parseInt(document.getElementById("studentCoins").value || "0");
-    if(!name) return alert("Enter student name");
-    await db.collection("students").add({
-        name,
-        coins,
-        marks:0,
-        createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    document.getElementById("studentName").value="";
-    document.getElementById("studentCoins").value="";
-    loadStudents();
-}
-
-// ---------------- Load Students with Rank ----------------
-async function loadStudents(){
-    const snapshot = await db.collection("students")
-        .orderBy("coins","desc")  // Highest coins first
-        .get();
-
-    studentTable.innerHTML = "";
-    let rank = 1; // manual rank counter
-
-    snapshot.forEach(doc=>{
-        const stu = doc.data();
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${rank}</td>
-            <td>${stu.name}</td>
-            <td class="coin ${stu.coins >= 0 ? 'pos' : 'neg'}">${stu.coins}</td>
-            <td>${stu.marks}</td>
-            <td>
-                <button onclick="giveMarks('${doc.id}')">Give Marks</button>
-                <button onclick="deleteStudent('${doc.id}')">Delete</button>
-            </td>
-        `;
-        studentTable.appendChild(tr);
-        rank++; // increment for next student
-    });
-}
-
-// ---------------- Give Marks ----------------
-async function giveMarks(id){
-    const m = parseInt(prompt("Enter marks for student","0"));
-    if(isNaN(m)) return;
-    const stuRef = db.collection("students").doc(id);
-    const doc = await stuRef.get();
-    const currentCoins = doc.data().coins || 0;
-    await stuRef.update({marks:m, coins:currentCoins + m});
-    loadStudents();
-}
-
-// ---------------- Delete Student ----------------
-async function deleteStudent(id){
-    if(!confirm("Delete student?")) return;
-    await db.collection("students").doc(id).delete();
-    loadStudents();
-}
-</script>
 </body>
-  </html>
+</html>
