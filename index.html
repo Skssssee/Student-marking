@@ -25,7 +25,7 @@
             border-radius: 8px;
             overflow: hidden;
             background-color: #000;
-            position: relative; 
+            position: relative; /* Required for overlays */
         }
 
         iframe {
@@ -34,24 +34,35 @@
             border: none;
         }
 
-        /* --- Real Tracker Badge Styles --- */
-        .real-tracker {
+        /* --- Live Viewer Count Styles --- */
+        .viewer-count {
             position: absolute;
             top: 15px;
             left: 15px;
-            z-index: 5;
             background: rgba(0, 0, 0, 0.7);
-            padding: 5px;
+            color: white;
+            padding: 6px 12px;
             border-radius: 4px;
-            display: none; /* Hidden until Telegram button is clicked */
-            align-items: center;
-        }
-        
-        .real-tracker span {
-            margin-right: 8px;
             font-size: 14px;
             font-weight: bold;
-            color: white;
+            display: flex;
+            align-items: center;
+            z-index: 5; /* Keeps it above the video */
+        }
+
+        .red-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #ff0000;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
         }
 
         /* --- Telegram Overlay Styles --- */
@@ -103,10 +114,9 @@
 
     <div class="video-container">
         
-        <div class="real-tracker" id="tracker-badge">
-            <span>🔴 Live Views:</span>
-            <script id="_wautw3">var _wau = _wau || []; _wau.push(["small", "YOUR_RANDOM_ID_XYZ", "tw3"]);</script>
-            <script async src="//waust.at/s.js"></script>
+        <div class="viewer-count" id="viewer-badge" style="display: none;">
+            <div class="red-dot"></div>
+            <span id="live-count">1,245</span>&nbsp;Watching
         </div>
 
         <div class="telegram-overlay" id="tg-overlay">
@@ -125,13 +135,28 @@
     </div>
 
     <script>
+        // 1. Logic to unlock stream and show the live count
         function unlockStream() {
-            // Hides the Telegram overlay
+            // Hide the Telegram overlay
             document.getElementById('tg-overlay').style.display = 'none';
-            
-            // Shows the real live tracker badge
-            document.getElementById('tracker-badge').style.display = 'flex';
+            // Show the live viewer count badge
+            document.getElementById('viewer-badge').style.display = 'flex';
         }
+
+        // 2. Logic to create a realistic fake viewer count
+        let currentViewers = 1245; // Starting number
+
+        setInterval(() => {
+            // Randomly add or subtract up to 5 viewers
+            const change = Math.floor(Math.random() * 11) - 5; 
+            currentViewers += change;
+
+            // Don't let it drop below 1200
+            if (currentViewers < 1200) currentViewers = 1205; 
+
+            // Update the HTML
+            document.getElementById('live-count').innerText = currentViewers.toLocaleString();
+        }, 3000); // Updates every 3 seconds
     </script>
 
 </body>
