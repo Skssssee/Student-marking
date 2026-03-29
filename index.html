@@ -23,7 +23,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             border-radius: 8px;
             overflow: hidden;
-            background-color: #000; /* Keeps a black background while loading */
+            background-color: #000;
         }
         iframe {
             width: 100%;
@@ -38,7 +38,9 @@
         <iframe 
             src="https://www.nimo.tv/embed/451887506" 
             allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-            allowfullscreen>
+            allowfullscreen="true"
+            webkitallowfullscreen="true"
+            mozallowfullscreen="true">
         </iframe>
     </div>
 
